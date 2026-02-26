@@ -88,13 +88,13 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center">
+      <h1 className="text-3xl font-bold mb-8 text-center text-black">
         Admin Panel - Manage Products
       </h1>
 
       {/* Form */}
       <div className="bg-white p-6 rounded-xl shadow-md mb-10 max-w-xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">
+        <h2 className="text-xl font-semibold mb-4 text-black">
           {isEditing ? "Edit Product" : "Add Product"}
         </h2>
 
@@ -104,7 +104,7 @@ export default function AdminPanel() {
           placeholder="Product Name"
           value={formData.name}
           onChange={handleChange}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 rounded mb-3 text-black"
         />
 
         <input
@@ -113,10 +113,10 @@ export default function AdminPanel() {
           placeholder="Price"
           value={formData.price}
           onChange={handleChange}
-          className="w-full border p-2 rounded mb-3"
+          className="w-full border p-2 rounded mb-3 text-black"
         />
 
-        {/* ✅ File Upload Instead of Text Input */}
+        {/* ✅ File Upload */}
         <input
           type="file"
           accept="image/*"
@@ -133,39 +133,41 @@ export default function AdminPanel() {
           />
         )}
 
-        {isEditing ? (
-          <button
-            onClick={handleUpdate}
-            className="bg-blue-600 text-white px-4 py-2 rounded mr-3"
-          >
-            Update
-          </button>
-        ) : (
-          <button
-            onClick={handleAdd}
-            className="bg-green-600 text-white px-4 py-2 rounded mr-3"
-          >
-            Add
-          </button>
-        )}
+        <div className="flex flex-wrap gap-3">
+          {isEditing ? (
+            <button
+              onClick={handleUpdate}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Update
+            </button>
+          ) : (
+            <button
+              onClick={handleAdd}
+              className="bg-green-600 text-white px-4 py-2 rounded"
+            >
+              Add
+            </button>
+          )}
 
-        <button
-          onClick={resetForm}
-          className="bg-gray-500 text-white px-4 py-2 rounded"
-        >
-          Cancel
-        </button>
+          <button
+            onClick={resetForm}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
         <table className="w-full text-left">
           <thead className="bg-black text-white">
             <tr>
-              <th className="p-4">Image</th>
-              <th className="p-4">Name</th>
-              <th className="p-4">Price</th>
-              <th className="p-4">Actions</th>
+              <th className="p-4 text-black">Image</th>
+              <th className="p-4 text-black">Name</th>
+              <th className="p-4 text-black">Price</th>
+              <th className="p-4 text-black">Actions</th>
             </tr>
           </thead>
 
@@ -179,8 +181,8 @@ export default function AdminPanel() {
                     className="w-16 h-16 object-cover rounded"
                   />
                 </td>
-                <td className="p-4">{product.name}</td>
-                <td className="p-4">{product.price}</td>
+                <td className="p-4 text-black">{product.name}</td>
+                <td className="p-4 text-black">{product.price}</td>
                 <td className="p-4 space-x-3">
                   <button
                     onClick={() => handleEdit(product)}
@@ -200,7 +202,7 @@ export default function AdminPanel() {
 
             {products.length === 0 && (
               <tr>
-                <td colSpan={4} className="text-center p-6 text-gray-500">
+                <td colSpan={4} className="text-center p-6 text-black">
                   No products available
                 </td>
               </tr>
