@@ -1,16 +1,43 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
+interface Product {
+  id: number;
+  name: string;
+  price: string;
+  image: string;
+}
+
+
+
+
 export default function Home() {
-  const products = [
-    { id: 1, name: "Flamingo 20W-50", price: "$12", image: "/images/1.jpeg" },
-    { id: 2, name: "Flamingo 10W-40", price: "$18", image: "/images/2.jpeg" },
-    { id: 3, name: "Engine Oil A", price: "$15", image: "/images/3.jpeg" },
-    { id: 4, name: "Engine Oil B", price: "$16", image: "/images/4.jpeg" },
-    { id: 5, name: "Engine Oil C", price: "$20", image: "/images/5.jpeg" },
-    { id: 6, name: "Engine Oil D", price: "$22", image: "/images/6.jpeg" },
-    { id: 7, name: "Engine Oil E", price: "$19", image: "/images/7.jpeg" },
-    { id: 8, name: "Engine Oil F", price: "$25", image: "/images/8.jpeg" },
-    { id: 9, name: "Engine Oil G", price: "$17", image: "/images/9.jpeg" },
-    { id: 10, name: "Engine Oil H", price: "$21", image: "/images/10.jpeg" },
-  ];
+  // const products = [
+  //   { id: 1, name: "Flamingo 20W-50", price: "$12", image: "/images/1.jpeg" },
+  //   { id: 2, name: "Flamingo 10W-40", price: "$18", image: "/images/2.jpeg" },
+  //   { id: 3, name: "Engine Oil A", price: "$15", image: "/images/3.jpeg" },
+  //   { id: 4, name: "Engine Oil B", price: "$16", image: "/images/4.jpeg" },
+  //   { id: 5, name: "Engine Oil C", price: "$20", image: "/images/5.jpeg" },
+  //   { id: 6, name: "Engine Oil D", price: "$22", image: "/images/6.jpeg" },
+  //   { id: 7, name: "Engine Oil E", price: "$19", image: "/images/7.jpeg" },
+  //   { id: 8, name: "Engine Oil F", price: "$25", image: "/images/8.jpeg" },
+  //   { id: 9, name: "Engine Oil G", price: "$17", image: "/images/9.jpeg" },
+  //   { id: 10, name: "Engine Oil H", price: "$21", image: "/images/10.jpeg" },
+  // ];
+
+
+  const [products, setProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const storedProducts = localStorage.getItem("products");
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    }
+  }, []);
+
+
+  
 
   return (
     <main className="min-h-screen bg-gray-50">

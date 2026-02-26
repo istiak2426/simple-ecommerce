@@ -1,0 +1,197 @@
+"use client";
+import { useEffect, useState } from "react";
+
+interface Product {
+  id: number;
+  name: string;
+  price: string;
+  image: string;
+}
+
+export default function AdminPanel() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [formData, setFormData] = useState<Product>({
+    id: 0,
+    name: "",
+    price: "",
+    image: "",
+  });
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  // ✅ Load from localStorage on mount
+  useEffect(() => {
+    const storedProducts = localStorage.getItem("products");
+    if (storedProducts) {
+      setProducts(JSON.parse(storedProducts));
+    } else {
+      const defaultProducts = [
+        { id: 1, name: "Flamingo 20W-50", price: "$12", image: "/images/1.jpeg" },
+        { id: 2, name: "Flamingo 10W-40", price: "$18", image: "/images/2.jpeg" },
+      ];
+      setProducts(defaultProducts);
+      localStorage.setItem("products", JSON.stringify(defaultProducts));
+    }
+  }, []);
+
+  // ✅ Save to localStorage whenever products change
+  useEffect(() => {
+    localStorage.setItem("products", JSON.stringify(products));
+  }, [products]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleAdd = (): void => {
+    if (!formData.name || !formData.price || !formData.image) return;
+
+    const newProduct: Product = {
+      ...formData,
+      id: Date.now(),
+    };
+
+    setProducts((prev) => [...prev, newProduct]);
+    resetForm();
+  };
+
+  const handleEdit = (product: Product): void => {
+    setFormData(product);
+    setIsEditing(true);
+  };
+
+  const handleUpdate = (): void => {
+    setProducts((prev) =>
+      prev.map((p) => (p.id === formData.id ? formData : p))
+    );
+    resetForm();
+  };
+
+  const handleDelete = (id: number): void => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  const resetForm = (): void => {
+    setFormData({ id: 0, name: "", price: "", image: "" });
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-8">
+      <h1 className="text-3xl font-bold mb-8 text-center">
+        Admin Panel - Manage Products
+      </h1>
+
+      {/* Form */}
+      <div className="bg-white p-6 rounded-xl shadow-md mb-10 max-w-xl mx-auto">
+        <h2 className="text-xl font-semibold mb-4">
+          {isEditing ? "Edit Product" : "Add Product"}
+        </h2>
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Product Name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full border p-2 rounded mb-3"
+        />
+
+        <input
+          type="text"
+          name="price"
+          placeholder="Price"
+          value={formData.price}
+          onChange={handleChange}
+          className="w-full border p-2 rounded mb-3"
+        />
+
+        <input
+          type="text"
+          name="image"
+          placeholder="Image Path"
+          value={formData.image}
+          onChange={handleChange}
+          className="w-full border p-2 rounded mb-4"
+        />
+
+        {isEditing ? (
+          <button
+            onClick={handleUpdate}
+            className="bg-blue-600 text-white px-4 py-2 rounded mr-3"
+          >
+            Update
+          </button>
+        ) : (
+          <button
+            onClick={handleAdd}
+            className="bg-green-600 text-white px-4 py-2 rounded mr-3"
+          >
+            Add
+          </button>
+        )}
+
+        <button
+          onClick={resetForm}
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+        >
+          Cancel
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-xl shadow-md overflow-hidden">
+        <table className="w-full text-left">
+          <thead className="bg-black text-white">
+            <tr>
+              <th className="p-4">Image</th>
+              <th className="p-4">Name</th>
+              <th className="p-4">Price</th>
+              <th className="p-4">Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id} className="border-b">
+                <td className="p-4">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="w-16 h-16 object-cover rounded"
+                  />
+                </td>
+                <td className="p-4">{product.name}</td>
+                <td className="p-4">{product.price}</td>
+                <td className="p-4 space-x-3">
+                  <button
+                    onClick={() => handleEdit(product)}
+                    className="bg-yellow-500 text-white px-3 py-1 rounded"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(product.id)}
+                    className="bg-red-600 text-white px-3 py-1 rounded"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+
+            {products.length === 0 && (
+              <tr>
+                <td colSpan={4} className="text-center p-6 text-gray-500">
+                  No products available
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
