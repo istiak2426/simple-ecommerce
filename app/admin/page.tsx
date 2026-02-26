@@ -5,7 +5,7 @@ interface Product {
   id: number;
   name: string;
   price: string;
-  image: string;
+  image: string; // will store base64 string
 }
 
 export default function AdminPanel() {
@@ -18,22 +18,15 @@ export default function AdminPanel() {
   });
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  // ✅ Load from localStorage on mount
+  // Load from localStorage
   useEffect(() => {
     const storedProducts = localStorage.getItem("products");
     if (storedProducts) {
       setProducts(JSON.parse(storedProducts));
-    } else {
-      const defaultProducts = [
-        { id: 1, name: "Flamingo 20W-50", price: "$12", image: "/images/1.jpeg" },
-        { id: 2, name: "Flamingo 10W-40", price: "$18", image: "/images/2.jpeg" },
-      ];
-      setProducts(defaultProducts);
-      localStorage.setItem("products", JSON.stringify(defaultProducts));
     }
   }, []);
 
-  // ✅ Save to localStorage whenever products change
+  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
@@ -43,6 +36,21 @@ export default function AdminPanel() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  // ✅ Handle File Upload
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData({
+        ...formData,
+        image: reader.result as string, // base64 string
+      });
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleAdd = (): void => {
@@ -108,14 +116,22 @@ export default function AdminPanel() {
           className="w-full border p-2 rounded mb-3"
         />
 
+        {/* ✅ File Upload Instead of Text Input */}
         <input
-          type="text"
-          name="image"
-          placeholder="Image Path"
-          value={formData.image}
-          onChange={handleChange}
+          type="file"
+          accept="image/*"
+          onChange={handleFileUpload}
           className="w-full border p-2 rounded mb-4"
         />
+
+        {/* ✅ Image Preview */}
+        {formData.image && (
+          <img
+            src={formData.image}
+            alt="Preview"
+            className="w-32 h-32 object-cover rounded mb-4"
+          />
+        )}
 
         {isEditing ? (
           <button
