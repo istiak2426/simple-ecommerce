@@ -18,7 +18,6 @@ export default function AdminPanel() {
   });
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  // Load from localStorage
   useEffect(() => {
     const storedProducts = localStorage.getItem("products");
     if (storedProducts) {
@@ -26,7 +25,6 @@ export default function AdminPanel() {
     }
   }, []);
 
-  // Save to localStorage
   useEffect(() => {
     localStorage.setItem("products", JSON.stringify(products));
   }, [products]);
@@ -38,7 +36,6 @@ export default function AdminPanel() {
     });
   };
 
-  // File Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -47,7 +44,7 @@ export default function AdminPanel() {
     reader.onloadend = () => {
       setFormData({
         ...formData,
-        image: reader.result as string, // base64 string
+        image: reader.result as string,
       });
     };
     reader.readAsDataURL(file);
@@ -87,13 +84,13 @@ export default function AdminPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-8 text-center text-black">
+    <div className="min-h-screen bg-gray-100 p-4 sm:p-8">
+      <h1 className="text-3xl font-bold mb-6 text-center text-black">
         Admin Panel - Manage Products
       </h1>
 
       {/* Form */}
-      <div className="bg-white p-6 rounded-xl shadow-md mb-10 max-w-xl mx-auto">
+      <div className="bg-white p-6 rounded-xl shadow-md mb-8 max-w-xl mx-auto">
         <h2 className="text-xl font-semibold mb-4 text-black">
           {isEditing ? "Edit Product" : "Add Product"}
         </h2>
@@ -116,7 +113,6 @@ export default function AdminPanel() {
           className="w-full border p-2 rounded mb-3 text-black"
         />
 
-        {/* File Upload */}
         <input
           type="file"
           accept="image/*"
@@ -124,7 +120,6 @@ export default function AdminPanel() {
           className="w-full border p-2 rounded mb-4 text-black"
         />
 
-        {/* Image Preview */}
         {formData.image && (
           <img
             src={formData.image}
@@ -159,56 +154,42 @@ export default function AdminPanel() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-md overflow-x-auto">
-        <table className="w-full text-left">
-          <thead className="bg-black text-white">
-            <tr>
-              <th className="p-4 text-black">Image</th>
-              <th className="p-4 text-black">Name</th>
-              <th className="p-4 text-black">Price</th>
-              <th className="p-4 text-black">Actions</th>
-            </tr>
-          </thead>
+      {/* Product List */}
+      <div className="space-y-4">
+        {products.length === 0 && (
+          <p className="text-center text-black">No products available</p>
+        )}
 
-          <tbody>
-            {products.map((product) => (
-              <tr key={product.id} className="border-b">
-                <td className="p-4">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
-                </td>
-                <td className="p-4 text-black">{product.name}</td>
-                <td className="p-4 text-black">{product.price}</td>
-                <td className="p-4 space-x-3">
-                  <button
-                    onClick={() => handleEdit(product)}
-                    className="bg-yellow-500 text-white px-3 py-1 rounded"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(product.id)}
-                    className="bg-red-600 text-white px-3 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {products.length === 0 && (
-              <tr>
-                <td colSpan={4} className="text-center p-6 text-black">
-                  No products available
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="bg-white p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-4"
+          >
+            <img
+              src={product.image}
+              alt={product.name}
+              className="w-32 h-32 object-cover rounded"
+            />
+            <div className="flex-1 w-full">
+              <h3 className="text-lg font-semibold text-black">{product.name}</h3>
+              <p className="text-black mb-2">{product.price}</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(product.id)}
+                  className="bg-red-600 text-white px-3 py-1 rounded"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
