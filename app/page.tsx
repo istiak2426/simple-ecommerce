@@ -16,6 +16,14 @@ export default function Home() {
     const storedProducts = localStorage.getItem("products");
     if (storedProducts) {
       setProducts(JSON.parse(storedProducts));
+    } else {
+      // fallback products for mobile/test
+      setProducts([
+        { id: 1, name: "Flamingo 20W-50", price: "$12", image: "/images/1.jpeg" },
+        { id: 2, name: "Flamingo 10W-40", price: "$18", image: "/images/2.jpeg" },
+        { id: 3, name: "Engine Oil A", price: "$15", image: "/images/3.jpeg" },
+        { id: 4, name: "Engine Oil B", price: "$16", image: "/images/4.jpeg" },
+      ]);
     }
   }, []);
 
@@ -30,13 +38,13 @@ export default function Home() {
 
         {/* Desktop Menu */}
         <div className="space-x-6 hidden md:block">
-          <a href="#" className="text-gray-600 hover:text-black">
+          <a href="#" className="text-black hover:text-gray-800">
             Home
           </a>
-          <a href="#" className="text-gray-600 hover:text-black">
+          <a href="#" className="text-black hover:text-gray-800">
             Products
           </a>
-          <a href="#" className="text-gray-600 hover:text-black">
+          <a href="#" className="text-black hover:text-gray-800">
             Contact
           </a>
         </div>
@@ -48,11 +56,11 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="text-center py-16 md:py-20 px-6 bg-gradient-to-r from-gray-100 to-gray-200">
-        <h2 className="text-3xl md:text-6xl font-bold text-gray-800 mb-6">
+        <h2 className="text-3xl md:text-6xl font-bold text-black mb-6">
           Discover Amazing Products
         </h2>
 
-        <p className="text-gray-600 text-base md:text-lg mb-8">
+        <p className="text-black text-base md:text-lg mb-8">
           Quality motorcycle oils at the best prices.
         </p>
 
@@ -63,13 +71,13 @@ export default function Home() {
 
       {/* Product Section */}
       <section className="px-6 md:px-8 py-12 md:py-16">
-        <h3 className="text-2xl md:text-3xl font-bold text-center mb-10 md:mb-12">
+        <h3 className="text-2xl md:text-3xl font-bold text-center text-black mb-10 md:mb-12">
           Featured Products
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8 md:gap-10">
           {products.length === 0 && (
-            <p className="text-center text-gray-500 col-span-full">
+            <p className="text-center text-black col-span-full">
               No products found
             </p>
           )}
@@ -86,11 +94,11 @@ export default function Home() {
               />
 
               <div className="p-5 md:p-6 text-center">
-                <h4 className="text-lg md:text-xl font-semibold mb-2">
+                <h4 className="text-lg md:text-xl font-semibold mb-2 text-black">
                   {product.name}
                 </h4>
 
-                <p className="text-gray-700 mb-4 text-base md:text-lg">
+                <p className="mb-4 text-base md:text-lg text-black">
                   {product.price}
                 </p>
 
