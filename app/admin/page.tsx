@@ -5,7 +5,7 @@ interface Product {
   id: number;
   name: string;
   price: string;
-  image: string; // will store base64 string
+  image: string; // base64 string
 }
 
 export default function AdminPanel() {
@@ -38,7 +38,7 @@ export default function AdminPanel() {
     });
   };
 
-  // ✅ Handle File Upload
+  // File Upload
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -116,15 +116,15 @@ export default function AdminPanel() {
           className="w-full border p-2 rounded mb-3 text-black"
         />
 
-        {/* ✅ File Upload */}
+        {/* File Upload */}
         <input
           type="file"
           accept="image/*"
           onChange={handleFileUpload}
-          className="w-full border p-2 rounded mb-4"
+          className="w-full border p-2 rounded mb-4 text-black"
         />
 
-        {/* ✅ Image Preview */}
+        {/* Image Preview */}
         {formData.image && (
           <img
             src={formData.image}
