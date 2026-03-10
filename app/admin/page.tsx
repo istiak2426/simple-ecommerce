@@ -17,78 +17,42 @@ export default function AdminPanel() {
     image: null as File | null,
     imagePreview: "",
   });
+
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
-  // Fetch products from API
-  // const fetchProducts = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError("");
-      
-  //     console.log('Fetching products...');
-  //     const response = await fetch('/api/products');
-      
-  //     console.log('Response status:', response.status);
-      
-  //     if (!response.ok) {
-  //       const errorData = await response.json().catch(() => null);
-  //       console.error('Error response:', errorData);
-  //       throw new Error(errorData?.error || `Failed to fetch products: ${response.status}`);
-  //     }
-      
-  //     const data = await response.json();
-  //     console.log('Fetched products:', data);
-      
-  //     setProducts(data);
-  //   } catch (err) {
-  //     const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
-  //     setError(errorMessage);
-  //     console.error('Fetch error:', err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  // 🔥 file input reset key
+  const [fileInputKey, setFileInputKey] = useState(Date.now());
 
+  // Fetch products
   const fetchProducts = async () => {
-  try {
-    setLoading(true);
-    setError("");
-    
-    console.log('Fetching products...');
-    const response = await fetch('/api/products');
-    
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers));
-    
-    // Try to get the response text first for debugging
-    const responseText = await response.text();
-    console.log('Raw response:', responseText);
-    
-    let errorData;
     try {
-      errorData = JSON.parse(responseText);
-    } catch {
-      errorData = { error: responseText };
-    }
-    
-    if (!response.ok) {
-      console.error('Error response:', errorData);
-      throw new Error(errorData?.error || errorData?.details || `Failed to fetch products: ${response.status}`);
-    }
-    
-    setProducts(errorData);
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Failed to load products';
-    setError(errorMessage);
-    console.error('Fetch error:', err);
-  } finally {
-    setLoading(false);
-  }
-};
+      setLoading(true);
+      setError("");
 
+      const response = await fetch("/api/products");
 
+      const responseText = await response.text();
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = [];
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Failed to fetch products");
+      }
+
+      setProducts(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load products");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -105,9 +69,8 @@ export default function AdminPanel() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Create preview URL
     const previewUrl = URL.createObjectURL(file);
-    
+
     setFormData({
       ...formData,
       image: file,
@@ -115,50 +78,44 @@ export default function AdminPanel() {
     });
   };
 
-  const handleAdd = async (): Promise<void> => {
+  const handleAdd = async () => {
     if (!formData.name || !formData.price || !formData.image) {
-      setError('Please fill all fields and select an image');
+      setError("Please fill all fields and select an image");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const formDataToSend = new FormData();
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('image', formData.image);
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("image", formData.image);
 
-      console.log('Sending POST request...');
-      
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const response = await fetch("/api/products", {
+        method: "POST",
         body: formDataToSend,
       });
 
-      console.log('POST response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        console.error('Error response:', errorData);
-        throw new Error(errorData?.error || 'Failed to add product');
+        throw new Error(errorData?.error || "Failed to add product");
       }
 
       const newProduct = await response.json();
-      console.log('Product added:', newProduct);
-      
-      setProducts(prev => [newProduct, ...prev]);
+
+      setProducts((prev) => [newProduct, ...prev]);
+
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add product');
-      console.error('Add product error:', err);
+      setError(err instanceof Error ? err.message : "Failed to add product");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (product: Product): void => {
+  const handleEdit = (product: Product) => {
     setFormData({
       id: product.id,
       name: product.name,
@@ -166,98 +123,86 @@ export default function AdminPanel() {
       image: null,
       imagePreview: product.image_url,
     });
+
     setIsEditing(true);
-    setError('');
+    setError("");
   };
 
-  const handleUpdate = async (): Promise<void> => {
+  const handleUpdate = async () => {
     if (!formData.name || !formData.price) {
-      setError('Please fill all fields');
+      setError("Please fill all fields");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
       const formDataToSend = new FormData();
-      formDataToSend.append('id', formData.id.toString());
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('price', formData.price);
-      
+
+      formDataToSend.append("id", formData.id.toString());
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("price", formData.price);
+
       if (formData.image) {
-        formDataToSend.append('image', formData.image);
+        formDataToSend.append("image", formData.image);
       }
 
-      console.log('Sending PUT request...');
-      
-      const response = await fetch('/api/products', {
-        method: 'PUT',
+      const response = await fetch("/api/products", {
+        method: "PUT",
         body: formDataToSend,
       });
 
-      console.log('PUT response status:', response.status);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        console.error('Error response:', errorData);
-        throw new Error(errorData?.error || 'Failed to update product');
+        throw new Error(errorData?.error || "Failed to update product");
       }
 
       const updatedProduct = await response.json();
-      console.log('Product updated:', updatedProduct);
-      
-      setProducts(prev => 
-        prev.map(p => p.id === updatedProduct.id ? updatedProduct : p)
+
+      setProducts((prev) =>
+        prev.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
       );
+
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update product');
-      console.error('Update product error:', err);
+      setError(err instanceof Error ? err.message : "Failed to update product");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (id: number): Promise<void> => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+  const handleDelete = async (id: number) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
 
-      console.log('Sending DELETE request for ID:', id);
-      
       const response = await fetch(`/api/products?id=${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
-
-      console.log('DELETE response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        console.error('Error response:', errorData);
-        throw new Error(errorData?.error || 'Failed to delete product');
+        throw new Error(errorData?.error || "Failed to delete product");
       }
 
       const remainingProducts = await response.json();
-      console.log('Products after delete:', remainingProducts);
-      
+
       setProducts(remainingProducts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete product');
-      console.error('Delete product error:', err);
+      setError(err instanceof Error ? err.message : "Failed to delete product");
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = (): void => {
-    // Clean up preview URL if it exists
-    if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+  const resetForm = () => {
+    if (formData.imagePreview && formData.imagePreview.startsWith("blob:")) {
       URL.revokeObjectURL(formData.imagePreview);
     }
-    
+
     setFormData({
       id: 0,
       name: "",
@@ -265,14 +210,16 @@ export default function AdminPanel() {
       image: null,
       imagePreview: "",
     });
+
+    setFileInputKey(Date.now()); // 🔥 reset file input
+
     setIsEditing(false);
-    setError('');
+    setError("");
   };
 
-  // Clean up blob URLs when component unmounts
   useEffect(() => {
     return () => {
-      if (formData.imagePreview && formData.imagePreview.startsWith('blob:')) {
+      if (formData.imagePreview && formData.imagePreview.startsWith("blob:")) {
         URL.revokeObjectURL(formData.imagePreview);
       }
     };
@@ -284,22 +231,18 @@ export default function AdminPanel() {
         Admin Panel - Manage Products
       </h1>
 
-      {/* Error Display */}
       {error && (
         <div className="max-w-xl mx-auto mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
-          <p className="font-bold">Error:</p>
-          <p>{error}</p>
+          {error}
         </div>
       )}
 
-      {/* Loading Indicator */}
       {loading && (
         <div className="max-w-xl mx-auto mb-4 p-4 bg-blue-100 text-blue-700 rounded-lg">
           Loading...
         </div>
       )}
 
-      {/* Form */}
       <div className="bg-white p-6 rounded-xl shadow-md mb-8 max-w-xl mx-auto">
         <h2 className="text-xl font-semibold mb-4 text-black">
           {isEditing ? "Edit Product" : "Add Product"}
@@ -312,7 +255,6 @@ export default function AdminPanel() {
           value={formData.name}
           onChange={handleChange}
           className="w-full border p-2 rounded mb-3 text-black"
-          disabled={loading}
         />
 
         <input
@@ -322,91 +264,80 @@ export default function AdminPanel() {
           value={formData.price}
           onChange={handleChange}
           className="w-full border p-2 rounded mb-3 text-black"
-          disabled={loading}
         />
 
         <input
+          key={fileInputKey}
           type="file"
           accept="image/*"
           onChange={handleFileUpload}
           className="w-full border p-2 rounded mb-4 text-black"
-          disabled={loading}
         />
 
-        {/* Image Preview */}
         {formData.imagePreview && (
           <div className="mb-4">
             <img
               src={formData.imagePreview}
-              alt="Preview"
               className="w-32 h-32 object-cover rounded"
             />
           </div>
         )}
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex gap-3">
           {isEditing ? (
             <button
               onClick={handleUpdate}
-              disabled={loading}
-              className="bg-blue-600 text-white px-4 py-2 rounded disabled:bg-blue-300"
+              className="bg-blue-600 text-white px-4 py-2 rounded"
             >
-              {loading ? 'Updating...' : 'Update'}
+              Update
             </button>
           ) : (
             <button
               onClick={handleAdd}
-              disabled={loading}
-              className="bg-green-600 text-white px-4 py-2 rounded disabled:bg-green-300"
+              className="bg-green-600 text-white px-4 py-2 rounded"
             >
-              {loading ? 'Adding...' : 'Add'}
+              Add
             </button>
           )}
 
           <button
             onClick={resetForm}
-            disabled={loading}
-            className="bg-gray-500 text-white px-4 py-2 rounded disabled:bg-gray-300"
+            className="bg-gray-500 text-white px-4 py-2 rounded"
           >
             Cancel
           </button>
         </div>
       </div>
 
-      {/* Product List */}
       <div className="space-y-4">
-        {products.length === 0 && !loading && (
-          <p className="text-center text-black">No products available</p>
-        )}
-
         {products.map((product) => (
           <div
             key={product.id}
-            className="bg-white p-4 rounded-xl shadow-md flex flex-col sm:flex-row items-center sm:items-start gap-4"
+            className="bg-white p-4 rounded-xl shadow-md flex gap-4"
           >
             <img
-              src={product.image_url || '/placeholder-image.jpg'}
-              alt={product.name}
+              src={product.image_url}
               className="w-32 h-32 object-cover rounded"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/placeholder-image.jpg';
-              }}
             />
-            <div className="flex-1 w-full">
-              <h3 className="text-lg font-semibold text-black">{product.name}</h3>
-              <p className="text-black mb-2">{product.price}</p>
-              <div className="flex flex-wrap gap-2">
+
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-black">
+                {product.name}
+              </h3>
+
+              <p className="text-black">{product.price}</p>
+
+              <div className="flex gap-2 mt-2">
                 <button
                   onClick={() => handleEdit(product)}
-                  disabled={loading}
-                  className="bg-yellow-500 text-white px-3 py-1 rounded disabled:bg-yellow-300"
+                  className="bg-yellow-500 text-white px-3 py-1 rounded"
                 >
                   Edit
                 </button>
+
                 <button
                   onClick={() => handleDelete(product.id)}
-                  disabled={loading}
-                  className="bg-red-600 text-white px-3 py-1 rounded disabled:bg-red-300"
+                  className="bg-red-600 text-white px-3 py-1 rounded"
                 >
                   Delete
                 </button>
