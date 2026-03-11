@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 interface Product {
   id: number;
@@ -18,6 +18,7 @@ export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const cartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/products")
@@ -25,6 +26,53 @@ export default function Home() {
       .then((data) => setProducts(data))
       .catch((err) => console.error("Fetch error:", err));
   }, []);
+
+  // SWIPE HANDLER
+  useEffect(() => {
+    let startX = 0;
+    let currentX = 0;
+    let touching = false;
+
+    const touchStart = (e: TouchEvent) => {
+      if (!cartRef.current) return;
+      touching = true;
+      startX = e.touches[0].clientX;
+    };
+
+    const touchMove = (e: TouchEvent) => {
+      if (!touching || !cartRef.current) return;
+      currentX = e.touches[0].clientX;
+      const translateX = Math.min(0, currentX - startX);
+      cartRef.current.style.transform = `translateX(${translateX}px)`;
+    };
+
+    const touchEnd = () => {
+      if (!touching || !cartRef.current) return;
+      const diff = currentX - startX;
+      if (diff < -50) {
+        setIsCartOpen(false); // swipe left to close
+      } else {
+        setIsCartOpen(true); // swipe right to open
+      }
+      cartRef.current.style.transform = "";
+      touching = false;
+    };
+
+    const drawer = cartRef.current;
+    if (drawer) {
+      drawer.addEventListener("touchstart", touchStart);
+      drawer.addEventListener("touchmove", touchMove);
+      drawer.addEventListener("touchend", touchEnd);
+    }
+
+    return () => {
+      if (drawer) {
+        drawer.removeEventListener("touchstart", touchStart);
+        drawer.removeEventListener("touchmove", touchMove);
+        drawer.removeEventListener("touchend", touchEnd);
+      }
+    };
+  }, [isCartOpen]);
 
   const handleAddToCart = (product: Product, qty: number = 1) => {
     setCart((prev) => {
@@ -63,11 +111,9 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-900 text-white relative">
-
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-4 md:px-10 py-4 bg-gray-800 shadow sticky top-0 z-50">
         <h1 className="text-2xl font-bold">ShopEasy</h1>
-
         <div className="flex items-center gap-3 md:gap-6">
           <input
             type="text"
@@ -120,14 +166,11 @@ export default function Home() {
                 alt={product.name}
                 className="w-full h-56 md:h-64 object-cover group-hover:scale-105 transition duration-500 rounded-t-xl"
               />
-
-              {/* CART QUANTITY BADGE */}
               {getProductQuantity(product.id) > 0 && (
                 <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
                   {getProductQuantity(product.id)}
                 </span>
               )}
-
               <div className="p-4 text-center">
                 <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
                 <p className="text-gray-300 mb-3">{product.price}</p>
@@ -156,13 +199,11 @@ export default function Home() {
             >
               ×
             </button>
-
             <img
               src={selectedProduct.image_url}
               alt={selectedProduct.name}
               className="w-full md:w-1/2 h-64 md:h-96 object-cover rounded-xl"
             />
-
             <div className="flex flex-col justify-between">
               <div>
                 <h2 className="text-xl md:text-2xl font-bold mb-2">{selectedProduct.name}</h2>
@@ -171,7 +212,6 @@ export default function Home() {
                   {selectedProduct.description || "High performance oil for motorcycles."}
                 </p>
               </div>
-
               <div className="flex items-center gap-3 mt-4">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
@@ -200,6 +240,7 @@ export default function Home() {
 
       {/* CART DRAWER */}
       <div
+        ref={cartRef}
         className={`fixed top-0 right-0 h-full w-80 bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
@@ -211,16 +252,11 @@ export default function Home() {
               ×
             </button>
           </div>
-
           <div className="flex-1 overflow-y-auto space-y-4">
             {cart.length === 0 && <p className="text-gray-400">Cart is empty</p>}
             {cart.map((item) => (
               <div key={item.id} className="flex items-center gap-3">
-                <img
-                  src={item.image_url}
-                  alt={item.name}
-                  className="w-16 h-16 object-cover rounded"
-                />
+                <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded" />
                 <div className="flex-1">
                   <h4 className="font-semibold text-white">{item.name}</h4>
                   <p className="text-gray-300">
@@ -230,16 +266,12 @@ export default function Home() {
                     ).toFixed(2)}
                   </p>
                 </div>
-                <button
-                  onClick={() => handleRemoveFromCart(item.id)}
-                  className="text-red-500 font-bold"
-                >
+                <button onClick={() => handleRemoveFromCart(item.id)} className="text-red-500 font-bold">
                   ×
                 </button>
               </div>
             ))}
           </div>
-
           {cart.length > 0 && (
             <div className="mt-4">
               <p className="font-bold mb-2 text-white">Total: ${totalPrice}</p>
