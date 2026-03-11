@@ -8,6 +8,7 @@ interface Product {
   price: string;
   image_url: string;
   description?: string;
+  quantity?: number;
 }
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
   const [cart, setCart] = useState<Product[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     fetch("/api/products")
@@ -24,9 +26,18 @@ export default function Home() {
       .catch((err) => console.error("Fetch error:", err));
   }, []);
 
-  const handleAddToCart = (product: Product) => {
-    setCart((prev) => [...prev, product]);
-    setIsCartOpen(true); // Automatically open cart on mobile
+  const handleAddToCart = (product: Product, qty: number = 1) => {
+    setCart((prev) => {
+      const existing = prev.find((p) => p.id === product.id);
+      if (existing) {
+        return prev.map((p) =>
+          p.id === product.id ? { ...p, quantity: (p.quantity || 1) + qty } : p
+        );
+      }
+      return [...prev, { ...product, quantity: qty }];
+    });
+    setIsCartOpen(true);
+    setQuantity(1);
   };
 
   const handleRemoveFromCart = (id: number) => {
@@ -38,7 +49,11 @@ export default function Home() {
   );
 
   const totalPrice = cart
-    .reduce((sum, item) => sum + parseFloat(item.price.replace("$", "")), 0)
+    .reduce(
+      (sum, item) =>
+        sum + (parseFloat(item.price.replace("$", "")) * (item.quantity || 1)),
+      0
+    )
     .toFixed(2);
 
   return (
@@ -56,9 +71,6 @@ export default function Home() {
             onChange={(e) => setSearch(e.target.value)}
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400"
           />
-          <a className="hover:text-gray-700 cursor-pointer">Home</a>
-          <a className="hover:text-gray-700 cursor-pointer">Products</a>
-          <a className="hover:text-gray-700 cursor-pointer">Contact</a>
           <button
             className="relative bg-black text-white px-4 py-2 rounded-lg"
             onClick={() => setIsCartOpen(!isCartOpen)}
@@ -66,7 +78,7 @@ export default function Home() {
             Cart
             {cart.length > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                {cart.length}
+                {cart.reduce((sum, p) => sum + (p.quantity || 1), 0)}
               </span>
             )}
           </button>
@@ -79,7 +91,7 @@ export default function Home() {
           Premium Motorcycle Oils
         </h2>
         <p className="mb-8 text-lg max-w-2xl mx-auto">
-          Keep your engine smooth with our high performance oils designed for durability and efficiency.
+          Keep your engine smooth with our high performance oils.
         </p>
         <button className="bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition">
           Shop Now
@@ -98,23 +110,18 @@ export default function Home() {
               onClick={() => setSelectedProduct(product)}
               className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition cursor-pointer group relative overflow-hidden"
             >
-              <button className="absolute top-2 right-2 z-10 bg-white rounded-full p-2 shadow hover:bg-red-100 transition">
-                ❤️
-              </button>
-
               <img
                 src={product.image_url}
                 alt={product.name}
                 className="w-full h-64 object-cover group-hover:scale-110 transition duration-500"
               />
-
               <div className="p-6 text-center">
                 <h4 className="font-semibold text-lg mb-2">{product.name}</h4>
                 <p className="text-gray-700 mb-4">{product.price}</p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToCart(product);
+                    handleAddToCart(product, 1);
                   }}
                   className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
                 >
@@ -154,12 +161,29 @@ export default function Home() {
                     "High performance oil designed for smooth engine performance."}
                 </p>
               </div>
-              <button
-                onClick={() => handleAddToCart(selectedProduct)}
-                className="mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
-              >
-                Add To Cart
-              </button>
+
+              {/* QUANTITY SELECTOR */}
+              <div className="flex items-center gap-4 mt-4">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
+                  -
+                </button>
+                <span className="text-lg font-semibold">{quantity}</span>
+                <button
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="px-3 py-1 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => handleAddToCart(selectedProduct, quantity)}
+                  className="ml-auto bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition"
+                >
+                  Add {quantity} to Cart
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -174,7 +198,9 @@ export default function Home() {
         <div className="p-6 flex flex-col h-full">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Your Cart</h2>
-            <button onClick={() => setIsCartOpen(false)} className="text-2xl">×</button>
+            <button onClick={() => setIsCartOpen(false)} className="text-2xl">
+              ×
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-4">
@@ -188,7 +214,12 @@ export default function Home() {
                 />
                 <div className="flex-1">
                   <h4 className="font-semibold">{item.name}</h4>
-                  <p>{item.price}</p>
+                  <p>
+                    ${item.price} x {item.quantity || 1} = $
+                    {((parseFloat(item.price.replace("$", "")) || 0) *
+                      (item.quantity || 1)
+                    ).toFixed(2)}
+                  </p>
                 </div>
                 <button
                   onClick={() => handleRemoveFromCart(item.id)}
@@ -209,21 +240,6 @@ export default function Home() {
             </div>
           )}
         </div>
-      </div>
-
-      {/* MOBILE BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow md:hidden flex justify-around py-3">
-        <button>🏠</button>
-        <button>🔍</button>
-        <button className="relative" onClick={() => setIsCartOpen(true)}>
-          🛒
-          {cart.length > 0 && (
-            <span className="absolute -top-1 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-              {cart.length}
-            </span>
-          )}
-        </button>
-        <button>👤</button>
       </div>
 
       {/* FOOTER */}
