@@ -6,37 +6,26 @@ interface Product {
   id: number;
   name: string;
   price: string;
-  image: string; // URL or base64
+  image_url: string;
   description?: string;
 }
 
 export default function Home() {
+
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<Product[]>([]);
 
   useEffect(() => {
-    const storedProducts = localStorage.getItem("products");
-    if (storedProducts) {
-      setProducts(JSON.parse(storedProducts));
-    } else {
-      setProducts([
-        {
-          id: 1,
-          name: "Flamingo 20W-50",
-          price: "$12",
-          image: "/images/1.jpeg",
-          description: "High-quality 4-stroke motorcycle oil, 1L.",
-        },
-        {
-          id: 2,
-          name: "Flamingo 10W-40",
-          price: "$18",
-          image: "/images/2.jpeg",
-          description: "Premium synthetic oil for motorcycles, 1L.",
-        },
-      ]);
-    }
+    fetch("/api/products")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Products from API:", data);
+        setProducts(data);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch products", err);
+      });
   }, []);
 
   const handleAddToCart = (product: Product) => {
@@ -50,108 +39,122 @@ export default function Home() {
       {/* Navbar */}
       <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-md">
         <h1 className="text-2xl font-bold text-gray-800">ShopEasy</h1>
-        <div className="space-x-6 hidden md:block">
-          <a href="#" className="text-black hover:text-gray-800">Home</a>
-          <a href="#" className="text-black hover:text-gray-800">Products</a>
-          <a href="#" className="text-black hover:text-gray-800">Contact</a>
-        </div>
-        <button className="bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-800">
+        <button className="bg-black text-white px-4 py-2 rounded-lg">
           Cart ({cart.length})
         </button>
       </nav>
 
-      {/* Hero */}
-      <section className="text-center py-20 px-6 bg-gradient-to-r from-gray-100 to-gray-200">
-        <h2 className="text-4xl md:text-6xl font-bold text-black mb-6">
-          Discover Amazing Products
-        </h2>
-        <p className="text-black text-lg mb-8">
-          Quality motorcycle oils at the best prices.
-        </p>
-        <button className="bg-black text-white px-6 py-3 rounded-xl text-lg hover:bg-gray-800">
-          Shop Now
-        </button>
-      </section>
-
       {/* Product Section */}
       <section className="px-8 py-16">
+
         <h3 className="text-3xl font-bold text-center text-black mb-12">
           Featured Products
         </h3>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
+
           {products.map((product) => (
+
             <div
               key={product.id}
-              className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 cursor-pointer"
+              className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl cursor-pointer"
               onClick={() => setSelectedProduct(product)}
             >
+
               <img
-                src={product.image}
+                src={product.image_url}
                 alt={product.name}
                 className="w-full h-64 object-cover"
               />
+
               <div className="p-6 text-center">
-                <h4 className="text-xl font-semibold mb-2 text-black">{product.name}</h4>
+
+                <h4 className="text-xl font-semibold text-black">
+                  {product.name}
+                </h4>
+
                 <p className="text-black mb-4">{product.price}</p>
+
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleAddToCart(product); }}
-                  className="bg-black text-white px-5 py-2 rounded-lg hover:bg-gray-800 transition"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleAddToCart(product);
+                  }}
+                  className="bg-black text-white px-5 py-2 rounded-lg"
                 >
                   Add to Cart
                 </button>
+
               </div>
             </div>
+
           ))}
+
         </div>
+
       </section>
 
-      {/* Modal */}
+      {/* Product Modal */}
+
       {selectedProduct && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-3xl w-full p-6 relative flex flex-col md:flex-row gap-6">
-            
-            {/* Close Button */}
+
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+
+          <div className="bg-white rounded-xl max-w-3xl w-full p-6 relative flex gap-6">
+
             <button
               onClick={() => setSelectedProduct(null)}
-              className="absolute top-3 right-3 text-black text-2xl font-bold"
+              className="absolute top-3 right-3 text-2xl"
             >
               ×
             </button>
 
-            {/* Product Image */}
-            <div className="flex-1">
-              <img
-                src={selectedProduct.image}
-                alt={selectedProduct.name}
-                className="w-full h-80 object-cover rounded"
-              />
-            </div>
+            <img
+              src={selectedProduct.image_url}
+              className="w-1/2 h-80 object-cover rounded"
+            />
 
-            {/* Product Details */}
-            <div className="flex-1 flex flex-col justify-between">
+            <div className="flex flex-col justify-between">
+
               <div>
-                <h3 className="text-2xl font-bold text-black mb-2">{selectedProduct.name}</h3>
-                <p className="text-black mb-2">Price: {selectedProduct.price}</p>
+
+                <h3 className="text-2xl font-bold text-black">
+                  {selectedProduct.name}
+                </h3>
+
+                <p className="text-black mb-2">
+                  Price: {selectedProduct.price}
+                </p>
+
                 {selectedProduct.description && (
-                  <p className="text-black mb-4">{selectedProduct.description}</p>
+                  <p className="text-black">
+                    {selectedProduct.description}
+                  </p>
                 )}
+
               </div>
 
               <button
                 onClick={() => handleAddToCart(selectedProduct)}
-                className="bg-black text-white px-6 py-3 rounded-lg w-full hover:bg-gray-800 transition"
+                className="bg-black text-white px-6 py-3 rounded-lg"
               >
                 Add to Cart
               </button>
+
             </div>
+
           </div>
+
         </div>
+
       )}
 
       {/* Footer */}
+
       <footer className="bg-black text-white text-center py-6 mt-10">
         <p>© 2026 ShopEasy. All rights reserved.</p>
       </footer>
+
     </main>
   );
 }
