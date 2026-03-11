@@ -20,7 +20,7 @@ export default function Home() {
     fetch("/api/products")
       .then((res) => res.json())
       .then((data) => setProducts(data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("Fetch error:", err));
   }, []);
 
   const handleAddToCart = (product: Product) => {
@@ -28,20 +28,18 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50 text-black">
 
       {/* NAVBAR */}
 
-      <nav className="flex justify-between items-center px-8 py-4 bg-white shadow sticky top-0 z-40">
+      <nav className="flex justify-between items-center px-6 md:px-10 py-4 bg-white shadow sticky top-0 z-40">
 
-        <h1 className="text-2xl font-bold tracking-wide">
-          ShopEasy
-        </h1>
+        <h1 className="text-2xl font-bold">ShopEasy</h1>
 
-        <div className="hidden md:flex gap-8 text-gray-700">
-          <a className="hover:text-black cursor-pointer">Home</a>
-          <a className="hover:text-black cursor-pointer">Products</a>
-          <a className="hover:text-black cursor-pointer">Contact</a>
+        <div className="hidden md:flex gap-8">
+          <a className="hover:text-gray-700 cursor-pointer">Home</a>
+          <a className="hover:text-gray-700 cursor-pointer">Products</a>
+          <a className="hover:text-gray-700 cursor-pointer">Contact</a>
         </div>
 
         <div className="relative">
@@ -58,17 +56,16 @@ export default function Home() {
 
       </nav>
 
-
       {/* HERO */}
 
-      <section className="bg-gradient-to-r from-gray-100 to-gray-200 py-24 text-center">
+      <section className="bg-gradient-to-r from-gray-100 to-gray-200 py-20 text-center px-4">
 
-        <h2 className="text-5xl font-bold mb-6">
+        <h2 className="text-4xl md:text-5xl font-bold mb-6">
           Premium Motorcycle Oils
         </h2>
 
-        <p className="text-gray-600 mb-8 text-lg">
-          Keep your engine smooth with our high performance oils
+        <p className="mb-8 text-lg max-w-2xl mx-auto">
+          Keep your engine smooth with our high performance oils designed for durability and efficiency.
         </p>
 
         <button className="bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition">
@@ -77,16 +74,15 @@ export default function Home() {
 
       </section>
 
-
       {/* PRODUCTS */}
 
-      <section className="px-8 py-20 max-w-7xl mx-auto">
+      <section className="px-6 md:px-10 py-16 max-w-7xl mx-auto">
 
-        <h3 className="text-3xl font-bold text-center mb-14">
+        <h3 className="text-3xl font-bold text-center mb-12">
           Featured Products
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
 
           {products.map((product) => (
 
@@ -100,6 +96,7 @@ export default function Home() {
 
                 <img
                   src={product.image_url}
+                  alt={product.name}
                   className="w-full h-64 object-cover group-hover:scale-110 transition duration-500"
                 />
 
@@ -111,7 +108,7 @@ export default function Home() {
                   {product.name}
                 </h4>
 
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-700 mb-4">
                   {product.price}
                 </p>
 
@@ -135,14 +132,13 @@ export default function Home() {
 
       </section>
 
-
       {/* PRODUCT MODAL */}
 
       {selectedProduct && (
 
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 
-          <div className="bg-white rounded-2xl max-w-4xl w-full p-8 relative flex flex-col md:flex-row gap-10">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-8 relative flex flex-col md:flex-row gap-8">
 
             <button
               onClick={() => setSelectedProduct(null)}
@@ -153,22 +149,23 @@ export default function Home() {
 
             <img
               src={selectedProduct.image_url}
-              className="w-full md:w-1/2 h-96 object-cover rounded-xl"
+              alt={selectedProduct.name}
+              className="w-full md:w-1/2 h-80 md:h-96 object-cover rounded-xl"
             />
 
             <div className="flex flex-col justify-between">
 
               <div>
 
-                <h2 className="text-3xl font-bold mb-4">
+                <h2 className="text-2xl md:text-3xl font-bold mb-4">
                   {selectedProduct.name}
                 </h2>
 
-                <p className="text-xl text-gray-700 mb-4">
+                <p className="text-xl mb-4">
                   {selectedProduct.price}
                 </p>
 
-                <p className="text-gray-600">
+                <p className="text-gray-700">
                   {selectedProduct.description ||
                     "High performance oil designed for smooth engine performance."}
                 </p>
@@ -177,7 +174,7 @@ export default function Home() {
 
               <button
                 onClick={() => handleAddToCart(selectedProduct)}
-                className="mt-8 bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
+                className="mt-6 bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
               >
                 Add To Cart
               </button>
@@ -189,7 +186,6 @@ export default function Home() {
         </div>
 
       )}
-
 
       {/* FOOTER */}
 
