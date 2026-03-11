@@ -56,6 +56,11 @@ export default function Home() {
     )
     .toFixed(2);
 
+  const getProductQuantity = (id: number) => {
+    const item = cart.find((p) => p.id === id);
+    return item?.quantity || 0;
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 text-black relative">
 
@@ -115,6 +120,14 @@ export default function Home() {
                 alt={product.name}
                 className="w-full h-64 object-cover group-hover:scale-110 transition duration-500"
               />
+
+              {/* CART QUANTITY BADGE */}
+              {getProductQuantity(product.id) > 0 && (
+                <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
+                  {getProductQuantity(product.id)}
+                </span>
+              )}
+
               <div className="p-6 text-center">
                 <h4 className="font-semibold text-lg mb-2">{product.name}</h4>
                 <p className="text-gray-700 mb-4">{product.price}</p>
