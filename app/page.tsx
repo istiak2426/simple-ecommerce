@@ -19,35 +19,70 @@ export default function Home() {
   useEffect(() => {
     fetch("/api/products")
       .then((res) => res.json())
-      .then((data) => {
-        console.log("Products from API:", data);
-        setProducts(data);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch products", err);
-      });
+      .then((data) => setProducts(data))
+      .catch((err) => console.error(err));
   }, []);
 
   const handleAddToCart = (product: Product) => {
     setCart((prev) => [...prev, product]);
-    alert(`${product.name} added to cart!`);
   };
 
   return (
     <main className="min-h-screen bg-gray-50">
 
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-8 py-4 bg-white shadow-md">
-        <h1 className="text-2xl font-bold text-gray-800">ShopEasy</h1>
-        <button className="bg-black text-white px-4 py-2 rounded-lg">
-          Cart ({cart.length})
-        </button>
+      {/* NAVBAR */}
+
+      <nav className="flex justify-between items-center px-8 py-4 bg-white shadow sticky top-0 z-40">
+
+        <h1 className="text-2xl font-bold tracking-wide">
+          ShopEasy
+        </h1>
+
+        <div className="hidden md:flex gap-8 text-gray-700">
+          <a className="hover:text-black cursor-pointer">Home</a>
+          <a className="hover:text-black cursor-pointer">Products</a>
+          <a className="hover:text-black cursor-pointer">Contact</a>
+        </div>
+
+        <div className="relative">
+          <button className="bg-black text-white px-4 py-2 rounded-lg">
+            Cart
+          </button>
+
+          {cart.length > 0 && (
+            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+              {cart.length}
+            </span>
+          )}
+        </div>
+
       </nav>
 
-      {/* Product Section */}
-      <section className="px-8 py-16">
 
-        <h3 className="text-3xl font-bold text-center text-black mb-12">
+      {/* HERO */}
+
+      <section className="bg-gradient-to-r from-gray-100 to-gray-200 py-24 text-center">
+
+        <h2 className="text-5xl font-bold mb-6">
+          Premium Motorcycle Oils
+        </h2>
+
+        <p className="text-gray-600 mb-8 text-lg">
+          Keep your engine smooth with our high performance oils
+        </p>
+
+        <button className="bg-black text-white px-8 py-3 rounded-xl hover:bg-gray-800 transition">
+          Shop Now
+        </button>
+
+      </section>
+
+
+      {/* PRODUCTS */}
+
+      <section className="px-8 py-20 max-w-7xl mx-auto">
+
+        <h3 className="text-3xl font-bold text-center mb-14">
           Featured Products
         </h3>
 
@@ -57,35 +92,41 @@ export default function Home() {
 
             <div
               key={product.id}
-              className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl cursor-pointer"
               onClick={() => setSelectedProduct(product)}
+              className="bg-white rounded-2xl shadow-md hover:shadow-2xl transition cursor-pointer group"
             >
 
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="w-full h-64 object-cover"
-              />
+              <div className="overflow-hidden rounded-t-2xl">
+
+                <img
+                  src={product.image_url}
+                  className="w-full h-64 object-cover group-hover:scale-110 transition duration-500"
+                />
+
+              </div>
 
               <div className="p-6 text-center">
 
-                <h4 className="text-xl font-semibold text-black">
+                <h4 className="font-semibold text-lg mb-2">
                   {product.name}
                 </h4>
 
-                <p className="text-black mb-4">{product.price}</p>
+                <p className="text-gray-500 mb-4">
+                  {product.price}
+                </p>
 
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleAddToCart(product);
                   }}
-                  className="bg-black text-white px-5 py-2 rounded-lg"
+                  className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
                 >
                   Add to Cart
                 </button>
 
               </div>
+
             </div>
 
           ))}
@@ -94,51 +135,51 @@ export default function Home() {
 
       </section>
 
-      {/* Product Modal */}
+
+      {/* PRODUCT MODAL */}
 
       {selectedProduct && (
 
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
 
-          <div className="bg-white rounded-xl max-w-3xl w-full p-6 relative flex gap-6">
+          <div className="bg-white rounded-2xl max-w-4xl w-full p-8 relative flex flex-col md:flex-row gap-10">
 
             <button
               onClick={() => setSelectedProduct(null)}
-              className="absolute top-3 right-3 text-2xl"
+              className="absolute right-4 top-4 text-2xl"
             >
               ×
             </button>
 
             <img
               src={selectedProduct.image_url}
-              className="w-1/2 h-80 object-cover rounded"
+              className="w-full md:w-1/2 h-96 object-cover rounded-xl"
             />
 
             <div className="flex flex-col justify-between">
 
               <div>
 
-                <h3 className="text-2xl font-bold text-black">
+                <h2 className="text-3xl font-bold mb-4">
                   {selectedProduct.name}
-                </h3>
+                </h2>
 
-                <p className="text-black mb-2">
-                  Price: {selectedProduct.price}
+                <p className="text-xl text-gray-700 mb-4">
+                  {selectedProduct.price}
                 </p>
 
-                {selectedProduct.description && (
-                  <p className="text-black">
-                    {selectedProduct.description}
-                  </p>
-                )}
+                <p className="text-gray-600">
+                  {selectedProduct.description ||
+                    "High performance oil designed for smooth engine performance."}
+                </p>
 
               </div>
 
               <button
                 onClick={() => handleAddToCart(selectedProduct)}
-                className="bg-black text-white px-6 py-3 rounded-lg"
+                className="mt-8 bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
               >
-                Add to Cart
+                Add To Cart
               </button>
 
             </div>
@@ -149,10 +190,15 @@ export default function Home() {
 
       )}
 
-      {/* Footer */}
 
-      <footer className="bg-black text-white text-center py-6 mt-10">
-        <p>© 2026 ShopEasy. All rights reserved.</p>
+      {/* FOOTER */}
+
+      <footer className="bg-black text-white text-center py-8 mt-20">
+
+        <p className="text-gray-300">
+          © 2026 ShopEasy. All rights reserved.
+        </p>
+
       </footer>
 
     </main>
