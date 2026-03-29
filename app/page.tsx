@@ -113,7 +113,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-900 text-white relative">
       {/* NAVBAR */}
       <nav className="flex justify-between items-center px-4 md:px-10 py-4 bg-gray-800 shadow sticky top-0 z-50">
-        <h1 className="text-2xl font-bold">ShopEasy</h1>
+        <h1 className="text-2xl font-bold">RS Automotive</h1>
         <div className="flex items-center gap-3 md:gap-6">
           <input
             type="text"
