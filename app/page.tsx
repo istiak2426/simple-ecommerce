@@ -285,7 +285,7 @@ export default function Home() {
 
       {/* FOOTER */}
       <footer className="bg-gray-800 text-white text-center py-6 mt-12">
-        <p className="text-gray-400">© 2026 ShopEasy. All rights reserved.</p>
+        <p className="text-gray-400">© 2026 RS Automotive. All rights reserved.</p>
       </footer>
     </main>
   );
