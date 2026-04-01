@@ -139,7 +139,7 @@ export default function Home() {
       {/* HERO */}
       <section className="bg-gradient-to-r from-gray-700 to-gray-800 py-16 text-center px-4">
         <h2 className="text-3xl md:text-5xl font-bold mb-4">
-          Premium Motorcycle Oils
+          Premium Motorcycle Oil
         </h2>
         <p className="mb-6 text-base md:text-lg max-w-2xl mx-auto text-gray-300">
           Keep your engine smooth with our high performance oils.
