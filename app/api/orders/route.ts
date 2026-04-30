@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
 
     const { shippingAddress, phone, paymentMethod = "sslcommerz" } = await req.json();
 
-    // Validate required fields
     if (!shippingAddress || !phone) {
       return NextResponse.json({ error: "Shipping address and phone are required" }, { status: 400 });
     }
@@ -47,11 +46,11 @@ export async function POST(req: NextRequest) {
       return {
         product_id: item.product_id,
         quantity: item.quantity,
-        price: item.products.price, // keep as string to match your DB
+        price: item.products.price, // store as text
       };
     });
 
-    // Create order (status 'pending')
+    // Create order
     const { data: order, error: orderError } = await supabase
       .from('orders')
       .insert({
@@ -62,6 +61,7 @@ export async function POST(req: NextRequest) {
         shipping_address: shippingAddress,
         phone: phone,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
       .select()
       .single();
@@ -75,9 +75,11 @@ export async function POST(req: NextRequest) {
     const { error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItems.map(item => ({
-        ...item,
         order_id: order.id,
-        created_at: new Date().toISOString(),
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        created_at: new Date().toISOString()
       })));
 
     if (itemsError) {
@@ -87,20 +89,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Failed to create order items" }, { status: 500 });
     }
 
-    // Clear the cart
-    const { error: clearCartError } = await supabase
-      .from('cart_items')
-      .delete()
-      .eq('user_id', session.user.id);
+    // Clear cart
+    await supabase.from('cart_items').delete().eq('user_id', session.user.id);
 
-    if (clearCartError) {
-      console.error("Clear cart error:", clearCartError);
-      // Non-critical, continue
-    }
-
-    // If payment method is SSLCommerz, initiate payment
+    // If SSLCommerz, initiate payment
     if (paymentMethod === "sslcommerz") {
-      // Validate SSLCommerz credentials
       if (!process.env.SSLCOMMERZ_STORE_ID || !process.env.SSLCOMMERZ_STORE_PASSWORD) {
         console.error("SSLCommerz credentials missing");
         return NextResponse.json({ error: "Payment gateway not configured" }, { status: 500 });
@@ -111,7 +104,7 @@ export async function POST(req: NextRequest) {
         store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD,
         total_amount: total.toFixed(2),
         currency: "BDT",
-        tran_id: order.id.toString(), // unique transaction ID
+        tran_id: order.id.toString(),
         success_url: `${process.env.NEXTAUTH_URL}/api/payment/success`,
         fail_url: `${process.env.NEXTAUTH_URL}/api/payment/fail`,
         cancel_url: `${process.env.NEXTAUTH_URL}/api/payment/cancel`,
@@ -140,7 +133,6 @@ export async function POST(req: NextRequest) {
         });
 
         if (response.data.status === "SUCCESS") {
-          // Update order with transaction ID if provided
           const transactionId = response.data.transactionId || response.data.tran_id;
           if (transactionId) {
             await supabase
@@ -148,11 +140,9 @@ export async function POST(req: NextRequest) {
               .update({ transaction_id: transactionId })
               .eq('id', order.id);
           }
-          // Return the redirect URL to the payment gateway
           return NextResponse.json({ redirectUrl: response.data.GatewayPageURL });
         } else {
           console.error("SSLCommerz initiation failed:", response.data);
-          // Order remains with status 'pending' – you may want to mark as failed
           await supabase
             .from('orders')
             .update({ status: 'failed' })
@@ -161,7 +151,6 @@ export async function POST(req: NextRequest) {
         }
       } catch (axiosError: any) {
         console.error("SSLCommerz request error:", axiosError.message);
-        // Mark order as failed
         await supabase
           .from('orders')
           .update({ status: 'failed' })
@@ -170,7 +159,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // For Cash on Delivery or other methods, just return order ID
     return NextResponse.json({ orderId: order.id });
   } catch (error) {
     console.error("Order creation error:", error);
@@ -178,7 +166,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET orders for authenticated user
+// GET orders for user
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
