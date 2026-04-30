@@ -10,17 +10,20 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const res = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password: hashedPassword }),
-    });
-    if (res.ok) router.push("/login");
-    else setError("Registration failed");
-  };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  // Don't hash on client - send plain password
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }), // password as-is
+  });
+  if (res.ok) router.push("/login");
+  else {
+    const data = await res.json();
+    setError(data.error || "Registration failed");
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
