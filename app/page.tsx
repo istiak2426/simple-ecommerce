@@ -22,13 +22,11 @@ export default function HomePage() {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    // Fetch products
     fetch("/api/products")
       .then((res) => res.json())
       .then(setProducts)
       .catch(console.error);
 
-    // Fetch cart count if logged in
     if (session) {
       fetch("/api/cart")
         .then((res) => res.json())
@@ -51,7 +49,6 @@ export default function HomePage() {
       body: JSON.stringify({ productId: product.id, quantity: qty }),
     });
     if (res.ok) {
-      // Update cart count
       const cartRes = await fetch("/api/cart");
       const cartData = await cartRes.json();
       const totalItems = cartData.items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
