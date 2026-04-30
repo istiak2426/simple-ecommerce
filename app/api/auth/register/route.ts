@@ -6,7 +6,6 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, password } = await req.json();
 
-    // Validate input
     if (!name || !email || !password) {
       return NextResponse.json(
         { error: "Name, email and password are required" },
@@ -14,12 +13,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
+    // Check if user exists
+    const { data: existingUser } = await supabase
       .from("users")
       .select("email")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
     if (existingUser) {
       return NextResponse.json(
@@ -28,10 +27,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Hash password server-side (more secure)
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Insert new user
     const { error: insertError } = await supabase
       .from("users")
       .insert({
@@ -39,18 +36,18 @@ export async function POST(req: NextRequest) {
         name,
         email,
         password_hash: hashedPassword,
-        created_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
       });
 
     if (insertError) {
-      console.error("Supabase insert error:", insertError);
+      console.error("Register insert error:", insertError);
       return NextResponse.json(
         { error: "Failed to create user: " + insertError.message },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, message: "User registered successfully" });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Registration error:", error);
     return NextResponse.json(
