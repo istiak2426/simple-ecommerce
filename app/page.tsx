@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 interface Product {
   id: number;
@@ -8,126 +10,65 @@ interface Product {
   price: string;
   image_url: string;
   description?: string;
-  quantity?: number;
 }
 
-export default function Home() {
+export default function HomePage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [cart, setCart] = useState<Product[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [quantity, setQuantity] = useState(1);
-  const cartRef = useRef<HTMLDivElement>(null);
+  const [search, setSearch] = useState("");
+  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
+    // Fetch products
     fetch("/api/products")
       .then((res) => res.json())
-      .then((data) => setProducts(data))
-      .catch((err) => console.error("Fetch error:", err));
-  }, []);
+      .then(setProducts)
+      .catch(console.error);
 
-  // SWIPE HANDLER (unchanged)
-  useEffect(() => {
-    let startX = 0;
-    let currentX = 0;
-    let touching = false;
-
-    const touchStart = (e: TouchEvent) => {
-      if (!cartRef.current) return;
-      touching = true;
-      startX = e.touches[0].clientX;
-    };
-
-    const touchMove = (e: TouchEvent) => {
-      if (!touching || !cartRef.current) return;
-      currentX = e.touches[0].clientX;
-      const translateX = Math.min(0, currentX - startX);
-      cartRef.current.style.transform = `translateX(${translateX}px)`;
-    };
-
-    const touchEnd = () => {
-      if (!touching || !cartRef.current) return;
-      const diff = currentX - startX;
-      if (diff < -50) {
-        setIsCartOpen(false);
-      } else {
-        setIsCartOpen(true);
-      }
-      cartRef.current.style.transform = "";
-      touching = false;
-    };
-
-    const drawer = cartRef.current;
-    if (drawer) {
-      drawer.addEventListener("touchstart", touchStart);
-      drawer.addEventListener("touchmove", touchMove);
-      drawer.addEventListener("touchend", touchEnd);
+    // Fetch cart count if logged in
+    if (session) {
+      fetch("/api/cart")
+        .then((res) => res.json())
+        .then((data) => {
+          const totalItems = data.items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
+          setCartCount(totalItems);
+        })
+        .catch(console.error);
     }
+  }, [session]);
 
-    return () => {
-      if (drawer) {
-        drawer.removeEventListener("touchstart", touchStart);
-        drawer.removeEventListener("touchmove", touchMove);
-        drawer.removeEventListener("touchend", touchEnd);
-      }
-    };
-  }, [isCartOpen]);
-
-  const handleAddToCart = (product: Product, qty: number = 1) => {
-    setCart((prev) => {
-      const existing = prev.find((p) => p.id === product.id);
-      if (existing) {
-        return prev.map((p) =>
-          p.id === product.id ? { ...p, quantity: (p.quantity || 1) + qty } : p
-        );
-      }
-      return [...prev, { ...product, quantity: qty }];
-    });
-    setIsCartOpen(true);
-    setQuantity(1);
-  };
-
-  const handleRemoveFromCart = (id: number) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  // ✅ NEW CHECKOUT HANDLER
-  const handleCheckout = () => {
-    if (cart.length === 0) {
-      alert("Your cart is empty");
+  const addToCart = async (product: Product, qty: number) => {
+    if (!session) {
+      router.push("/login");
       return;
     }
-    const totalItems = cart.reduce((sum, p) => sum + (p.quantity || 1), 0);
-    const totalPriceFormatted = totalPrice;
-    alert(`Proceeding to checkout!\nTotal items: ${totalItems}\nTotal: $${totalPriceFormatted}`);
-    // Optional: redirect to /checkout page
-    // window.location.href = "/checkout";
-    // Optional: clear cart after checkout
-    // setCart([]);
-    // setIsCartOpen(false);
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ productId: product.id, quantity: qty }),
+    });
+    if (res.ok) {
+      // Update cart count
+      const cartRes = await fetch("/api/cart");
+      const cartData = await cartRes.json();
+      const totalItems = cartData.items?.reduce((sum: number, item: any) => sum + item.quantity, 0) || 0;
+      setCartCount(totalItems);
+      setSelectedProduct(null);
+      setQuantity(1);
+    } else {
+      alert("Failed to add to cart");
+    }
   };
 
   const filteredProducts = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase())
   );
 
-  const totalPrice = cart
-    .reduce(
-      (sum, item) =>
-        sum + (parseFloat(item.price.replace("$", "")) * (item.quantity || 1)),
-      0
-    )
-    .toFixed(2);
-
-  const getProductQuantity = (id: number) => {
-    const item = cart.find((p) => p.id === id);
-    return item?.quantity || 0;
-  };
-
   return (
     <main className="min-h-screen bg-gray-900 text-white relative">
-      {/* NAVBAR */}
       <nav className="flex justify-between items-center px-4 md:px-10 py-4 bg-gray-800 shadow sticky top-0 z-50">
         <h1 className="text-2xl font-bold">RS Automotive</h1>
         <div className="flex items-center gap-3 md:gap-6">
@@ -140,36 +81,36 @@ export default function Home() {
           />
           <button
             className="relative bg-black text-white px-4 py-2 rounded-lg md:px-6 md:py-3"
-            onClick={() => setIsCartOpen(!isCartOpen)}
+            onClick={() => router.push("/cart")}
           >
             Cart
-            {cart.length > 0 && (
+            {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                {cart.reduce((sum, p) => sum + (p.quantity || 1), 0)}
+                {cartCount}
               </span>
             )}
           </button>
+          {session ? (
+            <button onClick={() => router.push("/orders")} className="text-sm bg-gray-700 px-3 py-2 rounded">
+              Orders
+            </button>
+          ) : (
+            <button onClick={() => router.push("/login")} className="text-sm bg-gray-700 px-3 py-2 rounded">
+              Login
+            </button>
+          )}
         </div>
       </nav>
 
-      {/* HERO */}
       <section className="bg-gradient-to-r from-gray-700 to-gray-800 py-16 text-center px-4">
-        <h2 className="text-3xl md:text-5xl font-bold mb-4">
-          Premium Motorcycle Oil
-        </h2>
+        <h2 className="text-3xl md:text-5xl font-bold mb-4">Premium Motorcycle Oil</h2>
         <p className="mb-6 text-base md:text-lg max-w-2xl mx-auto text-gray-300">
           Keep your engine smooth with our high performance oils.
         </p>
-        <button className="bg-black text-white px-6 py-2 rounded-xl hover:bg-gray-900 transition">
-          Shop Now
-        </button>
       </section>
 
-      {/* PRODUCTS */}
       <section className="px-4 md:px-10 py-10 max-w-7xl mx-auto">
-        <h3 className="text-2xl md:text-3xl font-bold text-center mb-8">
-          Featured Products
-        </h3>
+        <h3 className="text-2xl md:text-3xl font-bold text-center mb-8">Featured Products</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {filteredProducts.map((product) => (
             <div
@@ -182,18 +123,13 @@ export default function Home() {
                 alt={product.name}
                 className="w-full h-56 md:h-64 object-cover group-hover:scale-105 transition duration-500 rounded-t-xl"
               />
-              {getProductQuantity(product.id) > 0 && (
-                <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full z-10">
-                  {getProductQuantity(product.id)}
-                </span>
-              )}
               <div className="p-4 text-center">
                 <h4 className="font-semibold text-lg mb-1">{product.name}</h4>
                 <p className="text-gray-300 mb-3">{product.price}</p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleAddToCart(product, 1);
+                    addToCart(product, 1);
                   }}
                   className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-900 transition"
                 >
@@ -205,14 +141,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRODUCT MODAL */}
       {selectedProduct && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl w-full max-w-3xl p-6 md:p-8 relative flex flex-col md:flex-row gap-6">
-            <button
-              onClick={() => setSelectedProduct(null)}
-              className="absolute top-3 right-3 text-2xl text-white"
-            >
+            <button onClick={() => setSelectedProduct(null)} className="absolute top-3 right-3 text-2xl text-white">
               ×
             </button>
             <img
@@ -229,23 +161,10 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex items-center gap-3 mt-4">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600"
-                >
-                  -
-                </button>
+                <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600">-</button>
                 <span className="text-white font-semibold">{quantity}</span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600"
-                >
-                  +
-                </button>
-                <button
-                  onClick={() => handleAddToCart(selectedProduct, quantity)}
-                  className="ml-auto bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition"
-                >
+                <button onClick={() => setQuantity((q) => q + 1)} className="px-3 py-1 bg-gray-700 rounded-lg hover:bg-gray-600">+</button>
+                <button onClick={() => addToCart(selectedProduct, quantity)} className="ml-auto bg-black text-white px-4 py-2 rounded-lg hover:bg-gray-900 transition">
                   Add {quantity}
                 </button>
               </div>
@@ -254,55 +173,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* CART DRAWER */}
-      <div
-        ref={cartRef}
-        className={`fixed top-0 right-0 h-full w-80 bg-gray-900 shadow-xl z-50 transform transition-transform duration-300 ${
-          isCartOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <div className="p-4 flex flex-col h-full">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold text-white">Your Cart</h2>
-            <button onClick={() => setIsCartOpen(false)} className="text-2xl text-white">
-              ×
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-4">
-            {cart.length === 0 && <p className="text-gray-400">Cart is empty</p>}
-            {cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-3">
-                <img src={item.image_url} alt={item.name} className="w-16 h-16 object-cover rounded" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-white">{item.name}</h4>
-                  <p className="text-gray-300">
-                    ${item.price} x {item.quantity || 1} = $
-                    {((parseFloat(item.price.replace("$", "")) || 0) *
-                      (item.quantity || 1)
-                    ).toFixed(2)}
-                  </p>
-                </div>
-                <button onClick={() => handleRemoveFromCart(item.id)} className="text-red-500 font-bold">
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          {cart.length > 0 && (
-            <div className="mt-4">
-              <p className="font-bold mb-2 text-white">Total: ${totalPrice}</p>
-              <button
-                onClick={handleCheckout}  // ✅ FIXED: now triggers checkout
-                className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-900 transition"
-              >
-                Checkout
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* FOOTER */}
       <footer className="bg-gray-800 text-white text-center py-6 mt-12">
         <p className="text-gray-400">© 2026 RS Automotive. All rights reserved.</p>
       </footer>
