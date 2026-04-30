@@ -27,7 +27,7 @@ export default function Home() {
       .catch((err) => console.error("Fetch error:", err));
   }, []);
 
-  // SWIPE HANDLER
+  // SWIPE HANDLER (unchanged)
   useEffect(() => {
     let startX = 0;
     let currentX = 0;
@@ -50,9 +50,9 @@ export default function Home() {
       if (!touching || !cartRef.current) return;
       const diff = currentX - startX;
       if (diff < -50) {
-        setIsCartOpen(false); // swipe left to close
+        setIsCartOpen(false);
       } else {
-        setIsCartOpen(true); // swipe right to open
+        setIsCartOpen(true);
       }
       cartRef.current.style.transform = "";
       touching = false;
@@ -90,6 +90,22 @@ export default function Home() {
 
   const handleRemoveFromCart = (id: number) => {
     setCart((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  // ✅ NEW CHECKOUT HANDLER
+  const handleCheckout = () => {
+    if (cart.length === 0) {
+      alert("Your cart is empty");
+      return;
+    }
+    const totalItems = cart.reduce((sum, p) => sum + (p.quantity || 1), 0);
+    const totalPriceFormatted = totalPrice;
+    alert(`Proceeding to checkout!\nTotal items: ${totalItems}\nTotal: $${totalPriceFormatted}`);
+    // Optional: redirect to /checkout page
+    // window.location.href = "/checkout";
+    // Optional: clear cart after checkout
+    // setCart([]);
+    // setIsCartOpen(false);
   };
 
   const filteredProducts = products.filter((p) =>
@@ -275,7 +291,10 @@ export default function Home() {
           {cart.length > 0 && (
             <div className="mt-4">
               <p className="font-bold mb-2 text-white">Total: ${totalPrice}</p>
-              <button className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-900 transition">
+              <button
+                onClick={handleCheckout}  // ✅ FIXED: now triggers checkout
+                className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-900 transition"
+              >
                 Checkout
               </button>
             </div>
